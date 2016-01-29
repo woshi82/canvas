@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no">
+    <meta name="full-screen" content="yes">
+    <title>pixelImage</title>
+    <style>
+	html, body {
+		margin: 0;
+		padding: 0;
+	}
+	#canvas {
+		background: #000;
+	}
+    </style>
+</head>
+<body>
+<canvas id="canvas">
+	your computer is not support canvas 
+</canvas>
+</body>
+<script>
+window.requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || function(callback) {
+		window.RAMT = setTimeout(callback, 1000 / 60);
+	};
+ window.cancelAnimationFrame = window.cancelAnimationFrame || window.cancelRequestAnimationFrame ||  window.webkitCancelAnimationFrame || window.webkitCancelRequestAnimationFrame || function(){
+ 	clearTimeout(window.RAMT);
+ };
+
+function pixelImage(){
+	this.canvas = document.getElementById('canvas');
+	this.ctx = this.canvas.getContext('2d');
+	
+
+	this.pixels = [];
+	this.pixelsRandoms = [];
+	this.color = ["#000000","#FF0000","#FFFF00"];
+	this.radius = 0.5;
+	this.padding = 0;
+	this.mouse = {
+		x: 0,
+		y: 0
+	};
+	this.deltPos = {
+		dx: 0,
+		dy: 0
+	};
+	this.newPos = {
+		x: 0,
+		y: 0
+	};
+	this.mouseR = 100;
+	var _this = this;
+	_this.resizeCanvas();
+	// window.addEventListener('resize', _this.resizeCanvas, false);
+	this.loadImage();
+
+
+}
+pixelImage.prototype.resizeCanvas = function(){
+	this.canvas.width = window.innerWidth;
+	this.canvas.height = window.innerHeight;
+}
+pixelImage.prototype.loadImage = function(){
+	var _this = this;
+	_this.img = new Image();
+	_this.img.src = './images/logo.png';
+	
+	_this.img.onload = function(){
+		_this.imgW = _this.img.width;
+		_this.imgH = _this.img.height;
+		
+		_this.operatePixel();
+		// window.addEventListener('mousemove', function(e){
+		// 	_this.mousemove(e);
+		// }, false);
+	}
+}
+pixelImage.prototype.mousemove = function(e){
+	this.mouse.x = e.pageX;
+	this.mouse.y = e.pageY; 
+	for (var i = 0; i < this.pixelsRandoms.length; i++) {
+		var reDis = this.mouseDis(this.pixelsRandoms[i]);
+			if( reDis < this.mouseR){
+				//start time
+				this.pixelsRandoms[i].s_T = new Date().getTime();
+			}
+	}
+
+}
+
+//离鼠标的距离
+pixelImage.prototype.mouseDis = function(json){
+	json.delt = {
+		dx : json.initPos.x - this.mouse.x,
+		dy : json.initPos.y - this.mouse.y
+	}
+	var dx = json.delt.dx;
+	var dy = json.delt.dy;
+	// console.log(dx);
+	return Math.sqrt(dx*dx + dy*dy);
+}
+//获取新的目标点位置
+pixelImage.prototype.getNewPos = function(json){
+	var reDis = this.mouseDis(json);
+	json.newPos = {
+		x: json.delt.dx*this.mouseR/reDis + this.mouse.x,
+		y: json.delt.dy*this.mouseR/reDis + this.mouse.y,
+	}
+}
+//渲染对象
+pixelImage.prototype.mCreatePixel = function(){ 
+	var This = this;
+	
+	requestAnimationFrame(doCreate);
+
+
+	function doCreate(){
+		This.ctx.clearRect(0, 0, This.canvas.width, This.canvas.height);
+		// console.log(This.pixels.length);
+		for (var i = 0; i < This.pixels.length; i++) {
+			// var i = 200;
+
+			// var reDis = This.mouseDis(This.pixelsRandoms[i]);
+			// console.log(reDis);
+			// if( reDis < This.mouseR){
+			// 	This.getNewPos(This.pixelsRandoms[i]);
+			// 	This.updateState(This.pixelsRandoms[i], {x: This.pixelsRandoms[i].initPos.x, y: This.pixelsRandoms[i].initPos.y}, {x: This.pixelsRandoms[i].newPos.x, y: This.pixelsRandoms[i].newPos.y},3000, 'linear');	
+			// }
+			// else {
+			// 	This.updateState(This.pixelsRandoms[i], {x: This.pixelsRandoms[i].initPos.x, y: This.pixelsRandoms[i].initPos.y}, {x: This.pixels[i].x, y: This.pixels[i].y},3000, 'linear');
+			// }
+			This.pixels[i].elasticMove({x: This.pixels[i].tx, y: This.pixels[i].ty })
+			// console.log(This.pixels[i].x);
+			This.drawCircle(This.pixels[i]);
+		}
+
+		requestAnimationFrame(doCreate);
+	}
+	
+
+}
+
+
+//初始化对象位置
+pixelImage.prototype.operatePixel = function(){
+	this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+	this.ctx.drawImage(this.img,Math.round( ( this.canvas.width-this.imgW )/2 ),Math.round(( this.canvas.height-this.imgH )/2 ), this.imgW, this.imgH);
+	// this.ctx.drawImage(this.img,0,0);
+	this.imgdata = this.ctx.getImageData(Math.round( ( this.canvas.width-this.imgW )/2 ), Math.round( ( this.canvas.height-this.imgH )/2 ), this.imgW, this.imgH);
+	// this.imgdata = this.ctx.getImageData(0, 0, this.imgW, this.imgH);
+	this.data = this.imgdata.data;
+	for (var i = 0; i < this.data.length; i += 16) {
+		i += Math.floor(Math.random()*4)*4;
+		if(this.data[i+3]){
+			var sx = parseInt(i/4) % this.imgW;
+			var sy = parseInt( parseInt(i/4) / this.imgW );
+			var color = 'rgba('+this.data[i]+','+this.data[i+1]+','+this.data[i+2]+',1)';
+
+			this.padding = 2*this.radius;
+			var deltx = this.padding * (sx - this.imgW/2);
+			var delty = this.padding * (sy - this.imgH/2);
+			var tx = 1*deltx + this.canvas.width/2;
+			var ty = 1*delty + this.canvas.height/2;
+			var x = 2*deltx + this.canvas.width/2;
+			var y = 2*delty + this.canvas.height/2;
+			var point = new Point();
+			point.init({
+				tx: tx,
+				ty: ty,
+				x: x,
+				y: y,
+				c: color,
+				r: this.radius
+			});
+			this.pixels.push(point);
+		}
+	};
+	// this.createPixel();
+	this.mCreatePixel();
+
+}
+pixelImage.prototype.createPixel = function(){
+	this.go = true;
+ 	var _this = this;
+	for (var i = 0; i < this.pixelsRandoms.length; i++) {
+		_this.pixelsRandoms[i].go = true; 
+		//start time
+		_this.pixelsRandoms[i].s_T = new Date().getTime();
+	}
+	requestAnimationFrame(test);
+	function test(){
+		
+		if(_this.go){
+			// console.log('requestAnimationFrame');
+
+			_this.ctx.clearRect(0, 0, _this.canvas.width, _this.canvas.height);
+			for (var i = 0; i < _this.pixelsRandoms.length; i++) {
+
+				_this.updateState(_this.pixelsRandoms[i], {x: _this.pixelsRandoms[i].initPos.x, y: _this.pixelsRandoms[i].initPos.y}, {x: _this.pixels[i].x, y: _this.pixels[i].y},6000, 'linear');
+				if(_this.pixelsRandoms[i].go){
+					_this.go = true;
+				}
+				else {
+					_this.go = false;
+				}
+				_this.drawCircle(_this.pixelsRandoms[i]);
+			}
+			requestAnimationFrame(test);
+		}
+		else {
+			// console.log('cancelAnimationFrame');
+			cancelAnimationFrame(test);
+		}
+	}
+}
+pixelImage.prototype.drawCircle = function(json){
+	this.ctx.beginPath();
+	this.ctx.arc(json.x, json.y, json.r, 0, Math.PI*2, true);
+	this.ctx.fillStyle = json.c;
+	this.ctx.fill();
+	this.ctx.closePath();
+}
+pixelImage.prototype.updateState = function(target, from, to, durat, fx, cb){
+	var now_T = new Date().getTime();
+	var OK = target.s_T + durat > now_T;
+	if(OK){
+		target.p = now_T - target.s_T;
+		for (var i in from) {
+			target.initPos[i] = this.TWEEN[fx](target.p, from[i],  to[i]- from[i], durat);
+		};
+	}
+	else {
+		target.go = false;
+	}
+}
+
+pixelImage.prototype.TWEEN = {
+	linear: function (t, b, c, d){  //匀速
+		return c*t/d + b;
+	},
+	easeIn: function(t, b, c, d){  //加速曲线
+		return c*(t/=d)*t + b;
+	},
+	easeOut: function(t, b, c, d){  //减速曲线
+		return -c *(t/=d)*(t-2) + b;
+	},
+	easeBoth: function(t, b, c, d){  //加速减速曲线
+		if ((t/=d/2) < 1) {
+			return c/2*t*t + b;
+		}
+		return -c/2 * ((--t)*(t-2) - 1) + b;
+	},
+	easeInStrong: function(t, b, c, d){  //加加速曲线
+		return c*(t/=d)*t*t*t + b;
+	},
+	easeOutStrong: function(t, b, c, d){  //减减速曲线
+		return -c * ((t=t/d-1)*t*t*t - 1) + b;
+	},
+	easeBothStrong: function(t, b, c, d){  //加加速减减速曲线
+		if ((t/=d/2) < 1) {
+			return c/2*t*t*t*t + b;
+		}
+		return -c/2 * ((t-=2)*t*t*t - 2) + b;
+	},
+	elasticIn: function(t, b, c, d, a, p){  //正弦衰减曲线（弹动渐入）
+		if (t === 0) { 
+			return b; 
+		}
+		if ( (t /= d) == 1 ) {
+			return b+c; 
+		}
+		if (!p) {
+			p=d*0.3; 
+		}
+		if (!a || a < Math.abs(c)) {
+			a = c; 
+			var s = p/4;
+		} else {
+			var s = p/(2*Math.PI) * Math.asin (c/a);
+		}
+		return -(a*Math.pow(2,10*(t-=1)) * Math.sin( (t*d-s)*(2*Math.PI)/p )) + b;
+	},
+	elasticOut: function(t, b, c, d, a, p){    //正弦增强曲线（弹动渐出）
+		if (t === 0) {
+			return b;
+		}
+		if ( (t /= d) == 1 ) {
+			return b+c;
+		}
+		if (!p) {
+			p=d*0.3;
+		}
+		if (!a || a < Math.abs(c)) {
+			a = c;
+			var s = p / 4;
+		} else {
+			var s = p/(2*Math.PI) * Math.asin (c/a);
+		}
+		return a*Math.pow(2,-10*t) * Math.sin( (t*d-s)*(2*Math.PI)/p ) + c + b;
+	},    
+	elasticBoth: function(t, b, c, d, a, p){
+		if (t === 0) {
+			return b;
+		}
+		if ( (t /= d/2) == 2 ) {
+			return b+c;
+		}
+		if (!p) {
+			p = d*(0.3*1.5);
+		}
+		if ( !a || a < Math.abs(c) ) {
+			a = c; 
+			var s = p/4;
+		}
+		else {
+			var s = p/(2*Math.PI) * Math.asin (c/a);
+		}
+		if (t < 1) {
+			return - 0.5*(a*Math.pow(2,10*(t-=1)) * 
+					Math.sin( (t*d-s)*(2*Math.PI)/p )) + b;
+		}
+		return a*Math.pow(2,-10*(t-=1)) * 
+				Math.sin( (t*d-s)*(2*Math.PI)/p )*0.5 + c + b;
+	},
+	backIn: function(t, b, c, d, s){     //回退加速（回退渐入）
+		if (typeof s == 'undefined') {
+		   s = 3.70158;
+		}
+		return c*(t/=d)*t*((s+1)*t - s) + b;
+	},
+	backOut: function(t, b, c, d, s){
+		if (typeof s == 'undefined') {
+			s = 3.70158;  //回缩的距离
+		}
+		return c*((t=t/d-1)*t*((s+1)*t + s) + 1) + b;
+	}, 
+	backBoth: function(t, b, c, d, s){
+		if (typeof s == 'undefined') {
+			s = 1.70158; 
+		}
+		if ((t /= d/2 ) < 1) {
+			return c/2*(t*t*(((s*=(1.525))+1)*t - s)) + b;
+		}
+		return c/2*((t-=2)*t*(((s*=(1.525))+1)*t + s) + 2) + b;
+	},
+	bounceIn: function(t, b, c, d){    //弹球减振（弹球渐出）
+		return c - this['bounceOut'](d-t, 0, c, d) + b;
+	},       
+	bounceOut: function(t, b, c, d){
+		if ((t/=d) < (1/2.75)) {
+			return c*(7.5625*t*t) + b;
+		} else if (t < (2/2.75)) {
+			return c*(7.5625*(t-=(1.5/2.75))*t + 0.75) + b;
+		} else if (t < (2.5/2.75)) {
+			return c*(7.5625*(t-=(2.25/2.75))*t + 0.9375) + b;
+		}
+		return c*(7.5625*(t-=(2.625/2.75))*t + 0.984375) + b;
+	},      
+	bounceBoth: function(t, b, c, d){
+		if (t < d/2) {
+			return this['bounceIn'](t*2, 0, c, d) * 0.5 + b;
+		}
+		return this['bounceOut'](t*2-d, 0, c, d) * 0.5 + c*0.5 + b;
+	}
+}
+
+function Point(){
+	this.x = 0;
+	this.y = 0;
+	this.tx = 0;
+	this.ty = 0;
+	this.c = '';
+	this.radius = 0;
+	// this.x = window.innerWidth*Math.random();
+	// this.y = window.innerHeight*Math.random();
+	// this.s_t = new Date().getTime();
+	// this.life = Math.random()*2000 + 5000;
+	this.speed = {
+		x: 0,
+		y: 0
+	}
+}
+Point.prototype.init = function(json){
+	for (var attr in json) {
+		this[attr] = json[attr];
+	};
+}
+Point.prototype.randomPoint = function(json){
+	
+}
+Point.prototype.elasticMove = function(json){
+	var This = this;
+
+	// clearInterval(This.timer);
+	This.timer = setInterval(function(){
+		
+		var timerB = true;
+		for(var attr in json){
+			This.speed[attr] += ( json[attr] - This[attr] )/86;
+			This.speed[attr] *= 0.93;
+			
+			if(Math.abs(This.speed[attr]) <= 1 && Math.abs(json[attr] - This[attr]) <= 1) {
+
+				This[attr] = json[attr];
+			}
+			else {
+				timerB = false;
+				This[attr] = This[attr] + This.speed[attr];
+			}
+		}
+		if(timerB){
+			// console.log(444);
+			clearInterval(This.timer);
+		}
+	}, 200);
+
+}
+
+var pixelImage = new pixelImage();
+
+    
+</script>
+</html>

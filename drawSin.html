@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>drawSin</title>
+</head>
+<body>
+<!-- <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs="> -->
+<canvas id="drawSin"></canvas>
+</body>
+<script type="text/javascript">
+window.requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || function(callback) {
+		window.RAMT = setTimeout(callback, 1000 / 60);
+	};
+ window.cancelAnimationFrame = window.cancelAnimationFrame || window.cancelRequestAnimationFrame ||  window.webkitCancelAnimationFrame || window.webkitCancelRequestAnimationFrame || function(){
+ 	clearTimeout(window.RAMT);
+ };
+
+	function drawSin(){
+		this.canvas = document.getElementById('drawSin');
+		this.ctx = this.canvas.getContext('2d');
+		
+		this.n = 1000;
+		this.buffer = [];
+		this.cw = window.innerWidth;
+		this.ch = 600;\
+		// this.t_A = this.A = ~~(10+ Math.random()*10);
+		this.t_A = this.A = 0;
+		this.resize();
+		this.init();
+		this.nextframe();
+	}
+	drawSin.prototype.resize = function(){
+		this.canvas.width = this.cw;
+		this.canvas.height = this.ch;
+	}
+	drawSin.prototype.nextframe = function(){
+		var _this = this;
+		// this.getA();
+
+		for (var i = 0; i < this.n; i++) {
+			this.buffer[i].move();
+		};
+		// console.log(this.A)
+		this.draw();
+		// this.drawLine();
+		// this.A = 10+ Math.random()*200;
+		// for (var i = 0; i < this.n; i++) {
+		// 	// var i = 10;
+
+		// 	this.drawCircle(this.buffer[i].x, this.buffer[i].y)
+		// };
+		
+		// setTimeout(function(){
+		// 	window.requestAnimationFrame(function(){
+		// 		_this.nextframe();
+		// 	})
+			
+		// },100)
+	}
+	drawSin.prototype.getA = function(){
+
+		(this.t_A == this.A) && (this.t_A = ~~(10+ Math.random()*200) );
+		(this.t_A - this.A > 0)? this.A++ : this.A--;
+
+	}
+	drawSin.prototype.draw = function(){
+		var newImg = this.ctx.createImageData(this.cw, this.ch),
+			newData = newImg.data;
+
+		for (var i = 0; i < this.n; i++) {
+			// var i=20;
+			var n = 4*(~~this.buffer[i].y*this.cw + ~~this.buffer[i].x);
+			newData[n] = 231;
+			newData[n+1] = 0;
+			newData[n+2] = 34;
+			newData[n+3] = 255;
+			// newData[n] = this.buffer[i].color[0];
+			// newData[n+1] = this.buffer[i].color[1];
+			// newData[n+2] = this.buffer[i].color[2];
+			// newData[n+3] = this.buffer[i].color[3];
+			// console.log(n)
+ 
+		}
+		// newImg.data = newData;
+		// console.log(newData[766802])
+		this.ctx.putImageData(newImg, 0, 0);
+	}
+	drawSin.prototype.drawCircle = function(x, y){
+		this.ctx.beginPath();
+		this.ctx.arc(x, y, 1, 0, Math.PI * 2, true);
+		this.ctx.closePath();
+	  	this.ctx.fillStyle='rgba(233,0,23,1)';
+  		this.ctx.fill(); 
+  		this.ctx.closePath();
+	}
+	drawSin.prototype.drawLine = function(x, y){
+		this.ctx.clearRect(0,0,this.cw, this.ch);
+		this.ctx.beginPath();
+	 	this.ctx.moveTo(~~this.buffer[0].x, ~~this.buffer[0].y)
+	 	for (var i = 1; i < this.n; i++) {
+	 		this.ctx.lineTo(~~this.buffer[i].x, ~~this.buffer[i].y)
+	 	};
+	 	this.ctx.strokeStyle = 'rgba(233,0,23,1)';
+	 	this.ctx.stroke();
+  		this.ctx.closePath();
+	}
+	drawSin.prototype.init = function(){
+		for (var i = 0; i < this.n; i++) {
+			var PS_partical = new this.partical(this);
+			PS_partical.x = i;
+			PS_partical.init();
+			this.buffer.push(PS_partical);
+		};
+		
+	};
+	drawSin.prototype.partical = particals;
+
+	function particals(point){
+		this.point = point;
+		this.x = 0;
+		this.y = 0;
+		this.color = [233,0,23,1]
+		// this.a = 30 + Math.random()*30;
+		this.w = 0.05;
+		this.t = 0;
+		this.T = ~~(2*Math.PI/this.w);
+		this.delty = 0;
+		this.delta = 20;
+	}
+	particals.prototype.init = function(){
+		// console.log(2*Math.PI/this.w)
+		// this.x%this.T == 0 && ( this.point.A = ~~( 10 + Math.random()*100 ) );
+		this.y = this.point.A*Math.sin(this.w*this.x) +300;
+	}
+	particals.prototype.move = function(){
+		// console.log(this.point.A)
+		this.t+= 30;
+		if(this.x <= this.T + this.t   && this.x >= 0+ this.t){
+			this.delty = this.delta*Math.sin(this.w*this.x) ;
+		}else{
+			this.delty = 0;
+		}
+
+		
+
+		this.y = this.point.A*Math.sin(this.w*this.x) + this.delty +300;
+	}
+
+	var drawSin = new drawSin();
+	// console.log(-72.86 >> 0)
+</script>
+</html>

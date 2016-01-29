@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<style type="text/css">
+	html,body {
+		margin: 0;
+		padding: 0;
+	}
+	#canvas {
+		/*width: 800px;
+		height: 400px;*/
+	}
+	.round {
+		position: absolute;
+		left:600px;
+		top:50px;
+	}
+	.round>span {
+		border-radius: 50%;
+		position: absolute;
+		top: 50%;
+		left: 50%;
+	}
+	.round>span:nth-of-type(3){
+		width: 40px;
+		height: 40px;
+		margin-top:-20px;
+		margin-left:-20px;
+		background: #7c5656;
+	}
+	.round>span:nth-of-type(2){
+		width: 60px;
+		height: 60px;
+		margin-top:-30px;
+		margin-left:-30px;
+		background: #b37c7c;
+		opacity: 0;
+	}
+	.round>span:nth-of-type(1){
+		width: 80px;
+		height: 80px;
+		margin-top:-40px;
+		margin-left:-40px;
+		background: #ffb3b3;
+		opacity: 0;
+	}
+
+	.toBubble{
+		animation:toBubble 800ms linear;
+	}
+	@keyframes toBubble {
+		0% {
+			transform:scale(0);
+		}
+		40% {
+			transform:scale(1.2);
+		}
+		50% {
+			transform:scale(0.95);
+		}
+		68% {
+			transform:scale(1.1);
+		}
+		74%{
+			transform:scale(0.96);
+		}
+		88%{
+			transform:scale(1.05);
+		}
+		93%{
+			transform:scale(0.98);
+		}
+		97%{
+			transform:scale(1.02);
+		}
+		100%{
+			transform:scale(1);
+		}
+
+	}
+	.round>span.db1 {
+		animation: db1 1500ms linear 700ms infinite;
+		/*opacity: 1 ;*/
+
+	}
+	.round>span.db2 {
+		animation:db2 1500ms linear 700ms infinite;
+		opac ity: 1;
+
+	}
+	@keyframes db1 {
+		0%{
+			opacity: 0;
+		}
+		40%{
+			opacity: 1;
+		}
+		90%{
+			opacity: 1;
+		}
+		100%{
+			opacity: 0;
+		}
+
+	}
+	@keyframes db2 {
+		0%{
+			opacity: 0;
+		}
+		40%{
+			opacity: 0;
+		}
+		80%{
+			opacity: 1;
+		}
+		90%{
+			opacity: 1;
+		}
+		100%{
+			opacity: 0;
+		}
+
+	}
+
+
+</style>
+</head>
+
+<body>
+<canvas  id="canvas"></canvas>
+<div class="round">
+	<span class="db2"></span><span class="db1"></span><span class="toBubble"></span>
+
+</div>
+</body>
+<script type="text/javascript" src="./jquery-2.2.1.js"></script>
+<script>
+		// setInterval(function(){
+		// 	$('.round span').eq(1).animate({'opacity': 1},400,'linear', function(){
+		// 		$('.round span').eq(0).animate({'opacity': 1},400,'linear', function(){
+		// 			setTimeout(function(){
+		// 				$('.round span').eq(1).animate({'opacity': 0},150);
+		// 				$('.round span').eq(0).animate({'opacity': 0},150);
+		// 			},200)
+		// 		})
+		// 	});
+		// }, 1500)
+	
+	
+
+	var W = window.innerWidth,
+		H =window.innerHeight;
+	var canvas = document.getElementById('canvas');
+	var ctx = canvas.getContext('2d');
+	
+
+	function resize(){
+		canvas.width = W;
+		canvas.height = H;
+		canvas.style.width = W;
+		canvas.style.height = H;
+	};
+
+	var A = 4,
+		T = 100,
+		ww = 2*Math.PI/T,
+		ss = 0,
+		len1 = len2= len3 = 0;
+	window.requestAnimationFrame(go);
+
+	function go(){
+		ss += 1;
+		len1 = (len1 > 150) ? 150: (len1 += 4);
+		len2 = (len2 > 150) ? 150: (len2 += 4.2);
+		len3 = (len3 > 150) ? 150: (len3 += 3.6);
+		ctx.clearRect(0,0,W,H);
+		draw(0,len1);
+		draw(5,len2);
+		draw(10,len3);
+		window.requestAnimationFrame(go);
+	}
+
+	function draw(d, len){
+		
+		ctx.beginPath();
+		// ctx.moveTo(100, 100);
+		ctx.strokeStyle = '#bdd4cc';
+
+		for (var i = 0; i < len ; i++) {
+			var y = ~~A*Math.sin((i- ss*2)*ww );
+			ctx.lineTo( 30+i+0.5,30+y+d+0.5);
+		};
+		ctx.stroke();
+		ctx.closePath();
+	}
+	
+
+
+</script>
+</html>

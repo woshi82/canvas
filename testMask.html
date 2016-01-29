@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+<style type="text/css">
+	html,body {
+		margin: 0;
+		padding: 0;
+		background: #000;
+	}
+	.canvasW {
+		ma rgin: 100px;
+	}
+
+</style>
+<body>
+	<div class="canvasW">
+		<canvas id="canvas" style="border:10px solid red;"></canvas>
+	</div>
+	
+</body>
+<script>
+
+function testMask(){
+	this.canvas = document.getElementById('canvas');
+	this.ctx = this.canvas.getContext('2d');
+
+	this.H = window.innerHeight;
+	this.W= window.innerWidth;
+	this.resize()
+	window.onResize = function(){
+		H = window.innerHeight;
+		W= window.innerWidth;
+		this.resize();
+	}
+	this.loadImg();
+};
+testMask.prototype.resize = function(){
+	this.canvas.width = this.W;
+	this.canvas.height = this.H;
+	this.canvas.style.width = this.W + 'px';
+	this.canvas.style.height = this.H + 'px';
+};
+testMask.prototype.loadImg = function(){
+	var _this = this;
+	this.img = new Image();
+	this.img.src = "./images/1.jpg";
+	this.img.onload = function(){
+		_this.begin();
+	}
+};
+testMask.prototype.begin = function(){
+	var _this = this;
+	this.ctx.font="italic 900 60px Georgia ";
+	this.ctx.fillStyle = '#fe66d2';
+	this.ctx.fillText("Hello World!",100,150);
+
+	this.ctx.font="italic normal 60px Georgia ";
+	this.ctx.strokeStyle = '#fff';
+	this.ctx.strokeText("Hello World!",100,150);
+	
+	// this.ctx.fill();
+	// this.frame();
+	this.canvas.onmousedown = function(e){
+		var s_x = e.clientX,
+			s_y = e.clientY;
+			// _this.frame(s_x, s_y);
+		_this.canvas.onmousemove = function(e){
+			var d_x = e.clientX,
+				d_y = e.clientY;
+			console.log(1111)	
+			_this.frame(d_x, d_y);
+			e.preventDefault();
+		}
+		_this.canvas.onmouseup = function(e){
+			_this.canvas.onmousemove = _this.canvas.onmouseup = null;
+		};
+	}
+
+};
+testMask.prototype.frame = function(x,y){ 
+	this.ctx.clearRect(0,0,this.W,this.H);
+	console.log(x)
+	this.ctx.beginPath();
+	this.ctx.drawImage(this.img, 0, 0 ,this.img.width, this.img.height);
+	
+	this.ctx.closePath();
+	// this.ctx.globalCompositeOperation= 'xor';
+	this.ctx.save();
+	this.ctx.globalCompositeOperation= 'destination-in';
+	this.ctx.beginPath();
+	this.ctx.fillStyle="rgba(0,0,0,1)";
+	this.ctx.arc(x,y,50,0,2*Math.PI);
+	this.ctx.fill();
+	this.ctx.closePath();
+	this.ctx.restore();
+}
+
+
+// testMask.prototype.begin = function(){
+
+// }
+
+	
+
+	// ctx.beginPath();
+	// ctx.fillStyle = 'rgba(90,160,90,1)';
+	// ctx.fillRect(0,0,500,300);
+	// ctx.fill();
+	// ctx.closePath();
+
+	
+var testMask = new testMask();
+
+</script>
+</html>

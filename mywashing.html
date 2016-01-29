@@ -1,0 +1,171 @@
+<!doctype html>
+<html>
+<head>
+<title>canvasTest1</title>
+<style rel="">
+body, html {
+    margin: 0;
+    padding: 0;
+}
+</style>
+<script>
+window.onload=function() {
+    window.requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || function(callback) {
+            window.RAMT = setTimeout(callback, 1000 / 60);
+        };
+    window.cancelAnimationFrame = window.cancelAnimationFrame || window.   cancelRequestAnimationFrame ||  window.webkitCancelAnimationFrame || window.   webkitCancelRequestAnimationFrame || function(){
+            clearTimeout(window.RAMT);
+        };
+
+        console.log(typeof window.requestAnimationFrame);
+    function washing(){
+        this.Particles = [];
+        this.imgD = { 
+            w: 0,
+            h: 0
+        };
+        this.Img;
+        this.ImgData;
+        this.ImgDataL;
+
+        this.ctx = canvas.getContext('2d');
+        this.resize();
+        var This = this;
+        window.onresize = function(){
+            This.resize();
+        }
+        this.loadImg();
+        
+    }
+    washing.prototype.resize = function(){
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+    }
+    washing.prototype.loadImg = function(){
+        var This = this;
+        var img = new Image();
+        img.src = "images/2.jpg";
+        
+        img.onload = function(){
+            This.imgD = {
+                'w': img.width,
+                'h': img.height
+            }
+            This.ctx.drawImage(img, 0, 0, This.imgD.w, This.imgD.h, Math.round((canvas.width-This.imgD.w)/2), Math.round((canvas.height-This.imgD.h)/2), This.imgD.w, This.imgD.h);
+            
+            This.Img = This.ctx.getImageData((canvas.width-This.imgD.w)/2, (canvas.height-This.imgD.h)/2, This.imgD.w, This.imgD.h);
+            This.ImgData = This.Img.data;
+            This.ImgDataL = This.ImgData.length;
+            This.invisibleImage();
+        }
+
+    }
+    washing.prototype.invisibleImage = function(){
+        for (var i = 0; i < this.ImgDataL; i += 4) {
+            this.ImgData[i+3] = 0;
+        };
+        this.ctx.putImageData(this.Img, Math.round((canvas.width-this.imgD.w)/2), Math.round((canvas.height-this.imgD.h)/2));
+        this.doWashing();
+    }
+
+    washing.prototype.doWashing = function(){
+        var This = this;
+        this.initWashData();
+
+        requestAnimationFrame(washing);
+
+        function washing(){
+            This.updateWashData();
+            This.renderWashData();
+            requestAnimationFrame(washing);
+        }
+
+    }
+    washing.prototype.initWashData = function(){
+        for (var i = 0; i < 20; i++) {
+            this.Particles.push(new Particle());
+            this.Particles[i].initValue({
+                x: Math.random()*this.imgD.w,
+                y: 50,
+                vx: 0,
+                vy: 5
+            });
+        };
+
+    }
+    washing.prototype.updateWashData = function(){
+        for (var i = 0; i < this.Particles.length; i++) {
+            if(this.Particles[i].time <= this.Particles[i].life){
+                this.Particles[i].y += this.Particles[i].vy;
+                this.Particles[i].vx = Math.random()*4 - 2 ;
+                this.Particles[i].x += this.Particles[i].vx;
+                this.Particles[i].time += 1;
+            }
+            else {
+                this.Particles[i].initValue({
+                    x: Math.random()*this.imgD.w,
+                    y: 50,
+                    vx: 0,
+                    vy: 5,
+                });
+            }
+        }
+    }
+    washing.prototype.renderWashData = function(){ 
+        for (var i = 0; i < this.Particles.length; i++) {
+            
+            this.Particles[i].rangeRound({
+                imgW: this.imgD.w,
+                ImgDataL: this.ImgDataL,
+                ImgData: this.ImgData,
+
+            }) 
+        }; 
+        this.ctx.putImageData(this.Img, Math.round((canvas.width-this.imgD.w)/2), Math.round((canvas.height-this.imgD.h)/2));
+
+    }
+
+
+    function Particle(){
+        this.x = 0;
+        this.y = 0;
+        this.vx = 0;
+        this.vy = 0;
+        this.time = 0;
+        this.life = 0;
+        this.r = 6;
+    }
+    Particle.prototype.initValue = function(JSON){
+        this.x = JSON.x;
+        this.y = JSON.y;
+        this.vx = JSON.vx;
+        this.vy = JSON.vy;
+        this.time = 0;
+        this.life = Math.floor( (Math.random()*500) );
+    }
+    Particle.prototype.rangeRound = function(JSON){
+        for (var i = -this.r; i < this.r; i++) {
+            for (var j = -this.r; j < this.r; j++) {
+                var pix = ( Math.floor(this.y + j)*JSON.imgW + Math.floor(this.x + i) ) * 4;
+                if(pix < JSON.ImgDataL && i*j < this.r*this.r){
+                    JSON.ImgData[pix + 3] = Math.min(255, JSON.ImgData[pix + 3] + 8);
+                }
+            };
+        };
+    }
+
+
+
+    var washing = new washing();
+
+}
+</script>
+</head>
+<body>
+    <canvas id="canvas"  width="800" height="600" 
+   >
+        你的浏览器比支持canvas!
+    </canvas>
+</body>
+</html>

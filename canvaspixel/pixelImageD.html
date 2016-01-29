@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no">
+    <meta name="full-screen" content="yes">
+    <title>pixelImage</title>
+    <style>
+	html, body {
+		margin: 0;
+		padding: 0;
+		background: black;
+	}
+
+    </style>
+</head>
+<body>
+	<canvas id="canvas" >
+		your computer is not support canvas 
+	</canvas>
+</body>
+<script>
+window.requestAnimationFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || function(callback) {
+		window.RAMT = setTimeout(callback, 1000 / 60);
+	};
+ window.cancelAnimationFrame = window.cancelAnimationFrame || window.cancelRequestAnimationFrame ||  window.webkitCancelAnimationFrame || window.webkitCancelRequestAnimationFrame || function(){
+ 	clearTimeout(window.RAMT);
+ };
+
+function sliderPartical(){
+	this.canvas = document.getElementById('canvas');
+	this.srcCanv = document.createElement('canvas');
+	this.body = document.getElementsByTagName('body')[0];
+	this.body.appendChild(this.srcCanv);
+	this.srcCanv.style.display = 'none';
+	this.srcCtx = this.srcCanv.getContext('2d');
+	this.ctx = this.canvas.getContext('2d');
+
+	this.pxlBuffer = [];
+	this.pixelGap = 1;
+	this.swipeOffset = 0;
+	
+	this.resizeCanvas();
+	this.loadImage();
+
+	this.mouseforce = 5e3;
+	this.restless = !0;
+
+	var This = this;
+	this.canvas.onmousemove = function(e){
+		This.mx = e.pageX;
+		This.my = e.pageY;
+	}
+	This.canvas.onmouseout = function(e){
+		This.mx = -1;
+		This.my = -1;
+	}
+
+}
+sliderPartical.prototype.requestAnimationFrame = function(fn){
+	var rAF=window.requestAnimationFrame||window.webkitRequestAnimationFrame||window.mozRequestAnimationFrame||window.oRequestAnimationFrame||window.msRequestAnimationFrame||function(fn){window.setTimeout(fn,1e3/60)};
+	rAF(fn);
+
+}
+sliderPartical.prototype.resizeCanvas = function(){
+	this.cw = window.innerWidth;
+	this.ch = window.innerHeight;
+	this.canvas.width = this.cw;
+	this.canvas.height = this.ch;
+
+}
+sliderPartical.prototype.loadImage = function(){
+	var _this = this;
+	_this.img = new Image();
+	_this.img.src = './images/logo.png';
+	
+	_this.img.onload = function(){
+
+		_this.init();
+
+		// window.addEventListener('mousemove', function(e){
+		// 	_this.mousemove(e);
+		// }, false);
+	}
+}
+sliderPartical.prototype.init = function(){
+	var This = this;
+	this.srcCanv.width = this.img.width;
+	this.srcCanv.height = this.img.height;
+	this.srcCtx.clearRect(0,0,this.srcCanv.width, this.srcCanv.height)
+	this.srcCtx.drawImage(this.img, 0, 0 );
+	var result_data = this.getPixelFromImageData(this.srcCtx.getImageData(0,0,this.srcCanv.width, this.srcCanv.height), ~~((this.cw-this.srcCanv.width)/2), ~~((this.ch-this.srcCanv.height)/2))
+	this.shuffle(result_data);
+	// console.log(result_data);
+	// this.drawPartical(result_data);
+	for (var i = 0; i < result_data.length; i++) {
+		var psPartical = new this.partical(this);
+		psPartical.gravityX = result_data[i].x;
+		psPartical.gravityY = result_data[i].y;
+		psPartical.color = result_data[i].color;
+		this.pxlBuffer.push(psPartical);
+	};
+
+	This.requestAnimationFrame(function(){
+		This.nextFrame();
+	})
+
+}
+sliderPartical.prototype.nextFrame = function(){
+	var This = this;
+	// this.swipeOffset = this.mx<this.cw/2||this.mx>this.cw/2?this.mx-this.cw/2:0;
+	for (var i = 0; i < this.pxlBuffer.length; i++) {
+		this.pxlBuffer[i].move();
+	};
+	// console.log(~~this.pxlBuffer[2001].x);
+	this.drawPartical(this.pxlBuffer);
+	setTimeout(function(){
+		This.requestAnimationFrame(function(){
+			This.nextFrame();
+		})
+	}, 15);
+	
+}
+sliderPartical.prototype.shuffle = function(data){
+	for (var a,b,c = 0,d=data.length; d < c; c++) 
+		b = Math.floor(Math.random()*d),
+		a = data[c],
+		data[c] = data[b],
+		data[b] = a
+}
+sliderPartical.prototype.getPixelFromImageData = function(data, deltW, deltH){
+	for (var i = 0, newData = []; i < data.width; i += this.pixelGap+1)
+		for (var j = 0; j < data.height; j += this.pixelGap+1)
+			n = 4*(j*data.width + i),
+			data.data[n+3] > 0 && newData.push({
+				x: i + deltW,
+				y: j + deltH,
+				color: [data.data[n+0], data.data[n+1], data.data[n+2], data.data[n+3]]
+			});
+	return newData;
+}
+sliderPartical.prototype.drawPartical = function(result_data){
+	var newImg = this.ctx.createImageData(this.cw, this.ch),
+		newImgData = newImg.data;
+		// console.log(newImgData.width);
+	for (var i = 0; i < result_data.length; i ++){
+		n = 4*(~~result_data[i].y*this.cw + ~~result_data[i].x);
+		newImgData[n] = result_data[i].color[0];
+		newImgData[n+1] = result_data[i].color[1];
+		newImgData[n+2] = result_data[i].color[2];
+		newImgData[n+3] = result_data[i].color[3];
+		// console.log(result_data[i].color);
+
+	}
+	this.ctx.putImageData(newImg, 0, 0 );
+}
+sliderPartical.prototype.partical = psPartical;
+
+
+function psPartical(pointer){
+	this.p = pointer;
+	this.ttl=null;
+	this.color= null;
+	this.next=null;
+	this.prev=null;
+	this.gravityX=0;
+	this.gravityY=0;
+	// this.movex = 0;
+	// this.movey = 0
+	this.x=Math.random()*pointer.cw;
+	this.y=Math.random()*pointer.ch;
+	this.velocityX=10*Math.random()-5;
+	this.velocityY=10*Math.random()-5 ;
+}
+psPartical.prototype.move = function(){
+	var pointer = this.p,
+		deltx = this.gravityX - this.x,
+		delty = this.gravityY - this.y,
+		dis = Math.sqrt(Math.pow(deltx,2)+Math.pow(delty,2)),
+		ang = Math.atan2(delty,deltx),
+		accel = dis*0.01,
+		maccel = 0,
+		mang = 0;
+
+		// 1==pointer.restless
+		// 	?accel+=.1*Math.random()-.05
+		// 	:.01>accel
+		// 		&&(this.x=this.gravityX+.25,
+		// 		this.y=this.gravityY+.25);
+
+	if(pointer.mx >= 0 && pointer.mouseforce) {
+		var mdeltx = pointer.mx - this.x,
+			mdelty = pointer.my - this.y;
+		// if(mdis < 50) {
+			// this.movex = mdeltx*pointer.mx/mdis + pointer.mx,
+			// this.movey = mdelty*pointer.my/mdis + pointer.my,
+
+			mang = Math.atan2(mdelty,mdeltx),
+			maccel = Math.min(pointer.mouseforce/(Math.pow(mdeltx,2)+Math.pow(mdelty,2)), pointer.mouseforce),
+			mang+=Math.PI,
+			maccel*=.01+.1*Math.random()-.05;
+		// }
+			
+		// else {
+		// 	this.movex = 0,
+		// 	this.movey = 0;
+		// }
+			
+	}
+	accel+= Math.random()*.1 - .05;
+	this.velocityX += accel*Math.cos(ang) + maccel*Math.cos(mang);
+	this.velocityY += accel*Math.sin(ang) + maccel*Math.sin(mang);
+	this.velocityX *= .92;
+	this.velocityY *= .92;
+	this.x += this.velocityX;
+	this.y += this.velocityY;
+
+}
+
+
+
+
+var sliderPartical = new sliderPartical();
+    
+</script>
+</html>
